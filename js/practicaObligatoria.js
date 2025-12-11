@@ -91,3 +91,53 @@ function cargaDatosIniciales() {
   catalogo.addProducto(15, "Salsa Alioli 350 gr (Caja de 50)", 113.75, 2);
   catalogo.addProducto(16, "Salsa Barbacoa 500gr (Caja de 30)", 67.5, 2);
 }
+
+const select = document.getElementsByName('comerciales')[0];
+
+for (let i = 0; i < comerciales.length; i++) {
+  
+  const option = document.createElement('option');
+
+  option.value = i;
+  option.textContent = comerciales[i];
+
+  select.append(option);
+}
+
+
+contenedorClientes = document.createElement('div');
+const form = select.parentElement
+form.parentElement.append(contenedorClientes)
+
+generarClientes()
+
+select.addEventListener('change', generarClientes)
+
+function generarClientes() {
+  
+  const divClientes = [...document.querySelectorAll('.cliente')];
+
+  divClientes.forEach((elementDiv) => {
+    elementDiv.remove()
+  })
+
+
+  const opcionSeleccionada = select.value;
+
+  for (let i = 0; i < clientes[opcionSeleccionada].length; i++) {
+    
+    const div = document.createElement('div');
+    div.classList.add('cliente')
+    div.classList.add('pagado')
+    div.innerHTML = clientes[opcionSeleccionada][i]
+    const form = select.parentElement
+    form.parentElement.append(div)
+  }
+
+}
+
+const containerPedido = document.getElementById('pedido');
+const titulo = document.createElement('h1');
+titulo.textContent = 'Pedido'
+containerPedido.append(titulo)
+
