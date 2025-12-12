@@ -104,6 +104,7 @@ cargaDatosIniciales()
 console.log(catalogo.productos);
 
 const select = document.getElementsByName('comerciales')[0];
+const teclado =  document.getElementById('teclado');
 
 for (let i = 0; i < comerciales.length; i++) {
   
@@ -162,13 +163,19 @@ contenedor.addEventListener('click', (event) => {
   });
    
   const cliente = document.createElement('H2') 
-  const clienteSeleccionado = event.target
+  let clienteSeleccionado = event.target
   cliente.textContent = event.target.textContent
   console.log(cliente);
 
   if (cliente) {
     containerPedido.append(cliente)
   }
+  
+teclado.addEventListener('click', (event) => {
+  clienteSeleccionado.classList.remove('pagado')
+  clienteSeleccionado.classList.add('pendiente')
+})
+
 
 })
 
@@ -210,10 +217,4 @@ for (const producto of catalogo.productos) {
 }
 })
 
-const teclado =  document.getElementById('teclado');
-
-teclado.addEventListener('click', (event) => {
-  clienteSeleccionado.classList.remove('pagado')
-  clienteSeleccionado.classList.add('pendiente')
-})
 
