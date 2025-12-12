@@ -53,6 +53,13 @@ const categorias = ["Aceite", "Encurtidos", "Salsas"];
 const catalogo = new Catalogo();
 const gestor = new Gestor();
 
+const formulario = document.getElementById('frmComercial');
+const padreFormulario = formulario.parentElement;
+
+const contenedor = document.createElement('div')
+contenedor.className = 'contenedorCliente';
+padreFormulario.append(contenedor)
+
 function cargaDatosIniciales() {
   catalogo.addProducto(1, "Aceite Oliva Virgen Extra 1l (Caja 20)", 178.15, 0);
   catalogo.addProducto(
@@ -92,6 +99,10 @@ function cargaDatosIniciales() {
   catalogo.addProducto(16, "Salsa Barbacoa 500gr (Caja de 30)", 67.5, 2);
 }
 
+cargaDatosIniciales()
+
+console.log(catalogo.productos);
+
 const select = document.getElementsByName('comerciales')[0];
 
 for (let i = 0; i < comerciales.length; i++) {
@@ -116,7 +127,7 @@ select.addEventListener('change', generarClientes)
 function generarClientes() {
   
   const divClientes = [...document.querySelectorAll('.cliente')];
-
+  
   divClientes.forEach((elementDiv) => {
     elementDiv.remove()
   })
@@ -130,14 +141,79 @@ function generarClientes() {
     div.classList.add('cliente')
     div.classList.add('pagado')
     div.innerHTML = clientes[opcionSeleccionada][i]
-    const form = select.parentElement
-    form.parentElement.append(div)
+    contenedor.append(div)
   }
-
+  
 }
 
 const containerPedido = document.getElementById('pedido');
 const titulo = document.createElement('h1');
 titulo.textContent = 'Pedido'
 containerPedido.append(titulo)
+
+
+contenedor.addEventListener('click', (event) => {
+  
+  [...containerPedido.children].forEach(element => {
+    
+    if (element.tagName != 'H1') {
+      element.remove()
+    }
+  });
+   
+  const cliente = document.createElement('H2') 
+  const clienteSeleccionado = event.target
+  cliente.textContent = event.target.textContent
+  console.log(cliente);
+
+  if (cliente) {
+    containerPedido.append(cliente)
+  }
+
+})
+
+
+const selectProductos = document.getElementsByName('productos')[0];
+const selectCategoria = document.getElementsByName('categorias')[0];
+console.log(selectCategoria);
+categorias.forEach(element => {
+  const option = document.createElement('option');
+  option.value = element;
+  option.textContent = element;
+  selectCategoria.append(option); 
+});
+
+const valorCategoria = selectCategoria.selectedIndex;
+for (const producto of catalogo.productos) {
+  if (producto.idCategoria == valorCategoria) {
+      const option = document.createElement('option');
+      option.value = producto.nombreProducto;
+      option.textContent = producto.nombreProducto;
+      selectProductos.append(option)
+  }
+}
+
+selectCategoria.addEventListener('change', () => {
+
+[...selectProductos.children].forEach(element => {
+  element.remove()
+});
+const valorCategoria = selectCategoria.selectedIndex;
+
+for (const producto of catalogo.productos) {
+  if (producto.idCategoria == valorCategoria) {
+      const option = document.createElement('option');
+      option.value = producto.nombreProducto;
+      option.textContent = producto.nombreProducto;
+      selectProductos.append(option)
+  }
+}
+})
+
+const teclado =  document.getElementById('teclado');
+
+teclado.addEventListener('click', (event) => {
+  clienteSeleccionado.classList.remove('pagado')
+  clienteSeleccionado.classList.add('pendiente')
+})
 

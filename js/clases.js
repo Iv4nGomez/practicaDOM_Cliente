@@ -53,7 +53,7 @@ class Catalogo{
     }
 
     addProducto(idProducto, nombreProducto, precioUnidad, idCategoria) {
-        this.productos.append(new Producto(idProducto, nombreProducto, precioUnidad, idCategoria));
+        this.productos.push(new Producto(idProducto, nombreProducto, precioUnidad, idCategoria));
     }
 }
 
