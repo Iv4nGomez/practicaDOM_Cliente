@@ -189,12 +189,21 @@ contenedor.addEventListener('click', (event) => {
   if (cliente) {
     containerPedido.append(cliente);
   }
+
+  console.log(event.target.className);
+
+  if (event.target.className.includes('pendiente')) {
+    crearHeader()
+  }
 })
 
 teclado.addEventListener('click', pintarPendiente)
 
 //Si añade un producto a pedido pues se pone en rojo el div del cliente seleccionado
-function pintarPendiente() {
+function pintarPendiente(event) {
+
+  
+  crearHeader()
 
     let clienteTexto = '';
     [...containerPedido.children].forEach(elemento => {
@@ -210,12 +219,15 @@ function pintarPendiente() {
       if(elemento.textContent == clienteTexto) {
         if (!pendientePago.includes(elemento.textContent)) {
           pendientePago.push(elemento.textContent);
-          console.log(pendientePago);
         }
         elemento.classList.remove('pagado')
         elemento.classList.add('pendiente')
       }
     })
+
+    const producto = selectProductos.value;
+  
+    crearTabla(recuperarProducto(producto));
 }
 
 function cargarCategorias() {
@@ -249,3 +261,36 @@ selectCategoria.addEventListener('change', () => {
 });
 cargarProductos();
 })
+
+
+
+function recuperarProducto(productoNombre) {
+  return catalogo.productos.find((producto) => productoNombre == producto.nombreProducto)
+}
+
+function crearTabla(producto) {
+
+
+
+
+
+  
+
+}
+
+function crearHeader() {
+  
+  const table = document.createElement('table');
+  const columnas = ['Modificar', 'Uds.', 'Id.', 'Producto', 'Precio'];
+
+  const thead = table.createTHead()
+  const headerRow = thead.insertRow();
+
+  columnas.forEach(element => {
+    const th = document.createElement('th');
+    th.textContent = element;
+    headerRow.append(th)
+  });
+
+  containerPedido.append(table)
+}
