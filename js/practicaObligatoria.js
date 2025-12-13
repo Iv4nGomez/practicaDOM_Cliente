@@ -99,60 +99,81 @@ function cargaDatosIniciales() {
   catalogo.addProducto(16, "Salsa Barbacoa 500gr (Caja de 30)", 67.5, 2);
 }
 
-cargaDatosIniciales()
-
-console.log(catalogo.productos);
-
+//Elementos guardardas en constantes que se reutilizan en varias funciones
 const select = document.getElementsByName('comerciales')[0];
 const teclado =  document.getElementById('teclado');
+const containerPedido = document.getElementById('pedido');
+const selectProductos = document.getElementsByName('productos')[0];
+const selectCategoria = document.getElementsByName('categorias')[0];
+//Etructura de datos aux
 
-for (let i = 0; i < comerciales.length; i++) {
+const pendientePago = [];
+
+//Invocación de funciones para el funcionamiento de la web
+cargaDatosIniciales();
+cargarComerciales();
+generarContenedorClientes();
+generarClientes();
+crearTituloPedido();
+cargarCategorias();
+cargarProductos();
+
+//FUNCIONES
+
+function cargarComerciales() {
   
-  const option = document.createElement('option');
-
-  option.value = i;
-  option.textContent = comerciales[i];
-
-  select.append(option);
+  for (let i = 0; i < comerciales.length; i++) {
+    
+    const option = document.createElement('option');
+  
+    option.value = i;
+    option.textContent = comerciales[i];
+  
+    select.append(option);
+  }
 }
 
+function generarContenedorClientes() {
+  const contenedorClientes = document.createElement('div');
+  const form = select.parentElement;
+  form.parentElement.append(contenedorClientes);
+}
 
-contenedorClientes = document.createElement('div');
-const form = select.parentElement
-form.parentElement.append(contenedorClientes)
-
-generarClientes()
-
-select.addEventListener('change', generarClientes)
+select.addEventListener('change', generarClientes);
 
 function generarClientes() {
   
   const divClientes = [...document.querySelectorAll('.cliente')];
   
   divClientes.forEach((elementDiv) => {
-    elementDiv.remove()
+    elementDiv.remove();
   })
-
-
   const opcionSeleccionada = select.value;
 
   for (let i = 0; i < clientes[opcionSeleccionada].length; i++) {
     
     const div = document.createElement('div');
     div.classList.add('cliente')
-    div.classList.add('pagado')
     div.innerHTML = clientes[opcionSeleccionada][i]
+    if (pendientePago.includes(clientes[opcionSeleccionada][i])) {
+      div.classList.add('pendiente')
+    }
+    else {
+      div.classList.add('pagado')
+
+    }
     contenedor.append(div)
   }
   
 }
 
-const containerPedido = document.getElementById('pedido');
-const titulo = document.createElement('h1');
-titulo.textContent = 'Pedido'
-containerPedido.append(titulo)
+function crearTituloPedido() {
+  const titulo = document.createElement('h1');
+  titulo.textContent = 'Pedido'
+  containerPedido.append(titulo)
+}
 
-
+//Cambia el cliente seleccionado en el panel de pedido
 contenedor.addEventListener('click', (event) => {
   
   [...containerPedido.children].forEach(element => {
@@ -161,60 +182,70 @@ contenedor.addEventListener('click', (event) => {
       element.remove()
     }
   });
-   
-  const cliente = document.createElement('H2') 
-  let clienteSeleccionado = event.target
+  const cliente = document.createElement('H2');
+  const clienteSeleccionado = event.target;
   cliente.textContent = event.target.textContent
-  console.log(cliente);
 
   if (cliente) {
-    containerPedido.append(cliente)
+    containerPedido.append(cliente);
   }
-  
-teclado.addEventListener('click', (event) => {
-  clienteSeleccionado.classList.remove('pagado')
-  clienteSeleccionado.classList.add('pendiente')
 })
 
+teclado.addEventListener('click', pintarPendiente)
 
-})
+//Si añade un producto a pedido pues se pone en rojo el div del cliente seleccionado
+function pintarPendiente() {
 
+    let clienteTexto = '';
+    [...containerPedido.children].forEach(elemento => {
+      if(elemento.tagName == 'H2') {
+        clienteTexto = elemento.textContent;
+      }
+    })
 
-const selectProductos = document.getElementsByName('productos')[0];
-const selectCategoria = document.getElementsByName('categorias')[0];
-console.log(selectCategoria);
+    const contenedorCliente = document.getElementsByClassName('contenedorCliente')[0];
+
+    [...contenedorCliente.children].forEach(elemento => {
+
+      if(elemento.textContent == clienteTexto) {
+        if (!pendientePago.includes(elemento.textContent)) {
+          pendientePago.push(elemento.textContent);
+          console.log(pendientePago);
+        }
+        elemento.classList.remove('pagado')
+        elemento.classList.add('pendiente')
+      }
+    })
+}
+
+function cargarCategorias() {
+
 categorias.forEach(element => {
   const option = document.createElement('option');
   option.value = element;
   option.textContent = element;
   selectCategoria.append(option); 
 });
+}
 
-const valorCategoria = selectCategoria.selectedIndex;
-for (const producto of catalogo.productos) {
-  if (producto.idCategoria == valorCategoria) {
-      const option = document.createElement('option');
-      option.value = producto.nombreProducto;
-      option.textContent = producto.nombreProducto;
-      selectProductos.append(option)
+function cargarProductos() {
+  
+  const valorCategoria = selectCategoria.selectedIndex;
+  for (const producto of catalogo.productos) {
+    if (producto.idCategoria == valorCategoria) {
+        const option = document.createElement('option');
+        option.value = producto.nombreProducto;
+        option.textContent = producto.nombreProducto;
+        selectProductos.append(option)
+    }
   }
 }
 
+//Si el usuario cambia de categoria hay que cargar los productos de nuevo
 selectCategoria.addEventListener('change', () => {
 
 [...selectProductos.children].forEach(element => {
   element.remove()
 });
-const valorCategoria = selectCategoria.selectedIndex;
-
-for (const producto of catalogo.productos) {
-  if (producto.idCategoria == valorCategoria) {
-      const option = document.createElement('option');
-      option.value = producto.nombreProducto;
-      option.textContent = producto.nombreProducto;
-      selectProductos.append(option)
-  }
-}
+cargarProductos();
 })
-
-
