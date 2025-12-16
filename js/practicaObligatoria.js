@@ -201,12 +201,10 @@ teclado.addEventListener('click', pintarPendiente)
 
 //Si añade un producto a pedido pues se pone en rojo el div del cliente seleccionado
 function pintarPendiente(event) {
-
   
-  crearHeader()
-
-    let clienteTexto = '';
-    [...containerPedido.children].forEach(elemento => {
+  
+  let clienteTexto = '';
+  [...containerPedido.children].forEach(elemento => {
       if(elemento.tagName == 'H2') {
         clienteTexto = elemento.textContent;
       }
@@ -225,9 +223,27 @@ function pintarPendiente(event) {
       }
     })
 
+    let tablaEncontrada = false;
+    Array.from(containerPedido.children).forEach(elemento => {
+      if(elemento.tagName == 'TABLE') {
+        tablaEncontrada = true;
+      }
+    })
+
+    if (!tablaEncontrada) {
+
+      crearHeader()
+    }
+
     const producto = selectProductos.value;
-  
-    crearTabla(recuperarProducto(producto));
+
+    const numeroUnidades = event.target.value;
+
+    if (!event.target.value) {
+      return;
+    }
+
+    crearTabla(recuperarProducto(producto), numeroUnidades);
 }
 
 function cargarCategorias() {
@@ -268,13 +284,46 @@ function recuperarProducto(productoNombre) {
   return catalogo.productos.find((producto) => productoNombre == producto.nombreProducto)
 }
 
-function crearTabla(producto) {
+function crearTabla(producto, numeroUnidades) {
 
-
-
-
-
+  const l1 = new LineaPedido();
   
+l1._idProducto = producto.idProducto;
+l1.unidades = numeroUnidades;
+
+
+
+
+
+
+
+const table = document.querySelector('#pedido > table');
+
+const tbody = document.createElement('tbody');
+
+
+
+table.append(tbody)
+
+
+
+
+const cuerpoTabla = document.querySelector('#pedido > table tbody');
+const fila = cuerpoTabla.insertRow()
+
+const celdaModificadores = fila.insertCell()
+const celdaUnidades = fila.insertCell()
+const celdaIdProducto = fila.insertCell()
+const celdaNombreProducto = fila.insertCell()
+const celdaPrecioProducto = fila.insertCell()
+
+celdaModificadores.textContent = '';
+celdaUnidades.textContent = numeroUnidades;
+celdaIdProducto.textContent = producto.idProducto;
+celdaNombreProducto.textContent = producto.nombreProducto;
+celdaPrecioProducto.textContent = producto.precioUnidad;
+
+console.log(fila);
 
 }
 
