@@ -107,6 +107,8 @@ const selectCategoria = document.getElementsByName('categorias')[0];
 const selectProductos = document.getElementsByName('productos')[0];
 
 const teclado = document.getElementById('teclado');
+const contenedorPanel = document.getElementById('clientes');
+contenedorPanel.append(containerDelegacion);
 
 
 
@@ -116,18 +118,25 @@ const teclado = document.getElementById('teclado');
 cargaDatosIniciales()
 cargarClientes();
 estadoCliente()
-cargarClientesDOM();
 cargarCategorias();
 cargarProductos();
 
 
 function cargarClientes() {
-
-  //Añadir los comerciales al gestor
+  // Añadir los comerciales al gestor
   for (const comercial of comerciales) {
     gestor.comerciales.push(comercial);
   };
-  //Añadir comerciales al select de comercial
+
+  for (let i = 0; i < clientes.length; i++) {
+    const grupoClientes = clientes[i];
+    for (const nombreCliente of grupoClientes) {
+      const clienteObj = new Cliente(false, nombreCliente);
+      clienteObj.idComercial = i; 
+      gestor.clientes.push(clienteObj);
+    }
+  }
+
   for (const comercial of gestor.comerciales) {
     const option = document.createElement('option');
     option.value = comercial;
@@ -141,54 +150,46 @@ function cargarClientes() {
 selectComercial.addEventListener('change', estadoCliente)
 
 function estadoCliente() {
-  //Conseguir el comercial actual
   gestor.comercialActual = selectComercial.selectedIndex;
-  //Conseguir los clientes de ese comercial
-  for (const cliente of clientes[gestor.comercialActual]) {
-    gestor.clientes.push(new Cliente(false, cliente))
-  }
   cargarClientesDOM();
-  
 };
 
 function cargarClientesDOM() {
-  
-  //Recorrer todo el contenedor borrando todos los hijos para actualizar
-  
   for (const elemento of [...containerDelegacion.children]) {
     elemento.remove();
   }
   
-  const contenedorPanel = document.getElementById('clientes');
-  contenedorPanel.append(containerDelegacion);
-  
-  //Crear los div donde van los clientes con sus estilos
+ 
   for (const cliente of gestor.clientes) {
-    const divCliente = document.createElement('div');
-    if (cliente.cuentaAbierta == true) {
-      divCliente.classList.add('pendiente');
-    } else {
-      divCliente.classList.add('pagado');
-    }
+    if (cliente.idComercial === gestor.comercialActual) {
+      
+      const divCliente = document.createElement('div');
+      
+      if (cliente.cuentaAbierta == true) {
+        divCliente.classList.add('pendiente');
+      } else {
+        divCliente.classList.add('pagado');
+      }
+      
       divCliente.classList.add('cliente');
-      divCliente.textContent = cliente.toString();
-    containerDelegacion.append(divCliente)
+   
+      divCliente.textContent = cliente.toString(); 
+      containerDelegacion.append(divCliente);
+    }
   }
-  gestor.clientes = [];
-  
-  //Manejador de eventos anonimo para poder ver en que div se ha pulsado y ponerlo en el container de pedidos
-  containerDelegacion.addEventListener('click', (event) => {
-
-    
-    if(event.target.tagName == 'DIV') {
-      gestor.clienteActual = new Cliente(false, event.target.textContent)
+}
+//Manejador de eventos anonimo para poder ver en que div se ha pulsado y ponerlo en el container de pedidos
+containerDelegacion.addEventListener('click', (event) => {
+  if(event.target.tagName == 'DIV') {
+    for (const cliente of gestor.clientes) {
+        if(cliente.nombre == event.target.textContent) {
+          gestor.clienteActual = cliente;
+        }
+      }
       h2.textContent = event.target.textContent;
       containerPedido.append(h2);
-    };
-  });
-
-
-}
+  };
+});
 
 function cargarCategorias() {
   //Tener en el getor las categorias
@@ -230,14 +231,17 @@ teclado.addEventListener('click', cambiarEstadoCliente)
 
 function cambiarEstadoCliente(event) {
   if(event.target.tagName == 'INPUT') {
-    for (const cliente of [...containerDelegacion.children]) {
-      if (cliente.textContent == gestor.clienteActual.nombre) {
-        cliente.classList.remove('pagado');
-        cliente.classList.add('pendiente');
+    if(gestor.clienteActual) {
+       gestor.clienteActual.cuentaAbierta = true;
+    }
+
+    for (const clienteDiv of [...containerDelegacion.children]) {
+      if (gestor.clienteActual && clienteDiv.textContent == gestor.clienteActual.toString()) {
+        clienteDiv.classList.remove('pagado');
+        clienteDiv.classList.add('pendiente');
       }
     }
   }
-
-}
+  }
 
 
