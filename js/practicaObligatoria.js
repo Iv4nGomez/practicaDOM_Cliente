@@ -110,10 +110,6 @@ const teclado = document.getElementById('teclado');
 const contenedorPanel = document.getElementById('clientes');
 contenedorPanel.append(containerDelegacion);
 
-
-
-
-
 //Ejecución de las funciones, para el flujo del programa
 cargaDatosIniciales()
 cargarClientes();
@@ -121,74 +117,77 @@ estadoCliente()
 cargarCategorias();
 cargarProductos();
 
-
 function cargarClientes() {
-  // Añadir los comerciales al gestor
-  for (const comercial of comerciales) {
-    gestor.comerciales.push(comercial);
-  };
-
-  for (let i = 0; i < clientes.length; i++) {
-    const grupoClientes = clientes[i];
-    for (const nombreCliente of grupoClientes) {
-      const clienteObj = new Cliente(false, nombreCliente);
-      clienteObj.idComercial = i; 
-      gestor.clientes.push(clienteObj);
-    }
+  gestor.comerciales = comerciales;
+  selectComercial.innerHTML = ""; 
+  
+  for (let i = 0; i < gestor.comerciales.length; i++) {
+    const option = document.createElement('option');
+    option.value = i;
+    option.textContent = gestor.comerciales[i];
+    selectComercial.append(option);
   }
 
-  for (const comercial of gestor.comerciales) {
-    const option = document.createElement('option');
-    option.value = comercial;
-    option.textContent = comercial;
-    selectComercial.append(option);
-  };
-}
+  for (let i = 0; i < clientes.length; i++) {
+    
+    gestor.clientes[i] = []; 
+    gestor.pedidos[i] = [];  
 
+    for (let j = 0; j < clientes[i].length; j++) {
+      gestor.clientes[i][j] = new Cliente(false, clientes[i][j]);
+      gestor.pedidos[i][j] = []; 
+    }
+  }
+}
 
 //Conseguir los clientes de cada comercial y añadirlos en DOM
 selectComercial.addEventListener('change', estadoCliente)
 
 function estadoCliente() {
   gestor.comercialActual = selectComercial.selectedIndex;
-  cargarClientesDOM();
-};
-
-function cargarClientesDOM() {
-  for (const elemento of [...containerDelegacion.children]) {
-    elemento.remove();
-  }
+  gestor.clienteActual = null;
   
- 
-  for (const cliente of gestor.clientes) {
-    if (cliente.idComercial === gestor.comercialActual) {
-      
-      const divCliente = document.createElement('div');
-      
-      if (cliente.cuentaAbierta == true) {
-        divCliente.classList.add('pendiente');
-      } else {
-        divCliente.classList.add('pagado');
-      }
-      
-      divCliente.classList.add('cliente');
-   
-      divCliente.textContent = cliente.toString(); 
-      containerDelegacion.append(divCliente);
+  for (const elemento of [...containerPedido.children]) {
+    if(elemento.tagName !== 'H1') {
+      elemento.remove();
     }
   }
+  
+  cargarClientesDOM();
 }
-//Manejador de eventos anonimo para poder ver en que div se ha pulsado y ponerlo en el container de pedidos
+function cargarClientesDOM() {
+  containerDelegacion.innerHTML = "";
+  const listaClientes = gestor.clientes[gestor.comercialActual];
+  
+  listaClientes.forEach((cliente, index) => {
+    const div = document.createElement('div');
+    div.classList.add('cliente');
+    
+    if (cliente.cuentaAbierta) {
+      div.classList.add('pendiente');
+    } else {
+      div.classList.add('pagado');
+    }
+
+    div.textContent = cliente.nombre;
+
+    containerDelegacion.append(div);
+  });
+}
+
 containerDelegacion.addEventListener('click', (event) => {
-  if(event.target.tagName == 'DIV') {
-    for (const cliente of gestor.clientes) {
-        if(cliente.nombre == event.target.textContent) {
-          gestor.clienteActual = cliente;
-        }
-      }
-      h2.textContent = event.target.textContent;
-      containerPedido.append(h2);
-  };
+
+if (event.target.classList.contains('cliente')) {
+    
+    const nombrePulsado = event.target.textContent;
+    const clientesDelComercial = gestor.clientes[gestor.comercialActual];
+    const indiceEncontrado = clientesDelComercial.findIndex(c => c.nombre == nombrePulsado);
+
+    if (indiceEncontrado != -1) {
+        gestor.clienteActual = indiceEncontrado; 
+        actualizarPanelPedido();
+    }
+  }
 });
 
 function cargarCategorias() {
@@ -227,21 +226,171 @@ function cargarProductos() {
   });
 }
 
-teclado.addEventListener('click', cambiarEstadoCliente)
-
-function cambiarEstadoCliente(event) {
-  if(event.target.tagName == 'INPUT') {
-    if(gestor.clienteActual) {
-       gestor.clienteActual.cuentaAbierta = true;
-    }
-
-    for (const clienteDiv of [...containerDelegacion.children]) {
-      if (gestor.clienteActual && clienteDiv.textContent == gestor.clienteActual.toString()) {
-        clienteDiv.classList.remove('pagado');
-        clienteDiv.classList.add('pendiente');
-      }
-    }
+teclado.addEventListener('click', (event) => {
+  if (event.target.tagName === 'INPUT') {
+    const cantidad = parseInt(event.target.value);
+    aniadirProducto(cantidad);
   }
+    actualizarPanelPedido();
+});
+
+function aniadirProducto(unidades) {
+  if (gestor.clienteActual === null || gestor.comercialActual === null) {
+      return;
   }
 
+  const idProd = parseInt(selectProductos.value);
+  
+  const misPedidos = gestor.pedidos[gestor.comercialActual][gestor.clienteActual];
+  const lineaExistente = misPedidos.find(l => l.idProducto == idProd);
 
+  if (lineaExistente) {
+    alert("Ya existe este producto en el pedido, si quiere modficar la cantidad utilice los controles de la cuenta");
+    return; 
+  } else {
+    misPedidos.push(new LineaPedido(unidades, idProd));
+    gestor.clientes[gestor.comercialActual][gestor.clienteActual].cuentaAbierta = true;
+    cargarClientesDOM();     
+    actualizarPanelPedido();
+  }
+}
+
+function actualizarPanelPedido() {
+  //Actualizar con la informacion del pedido del cliente
+  for (const elemento of [...containerPedido.children]) {
+    if(elemento.tagName != 'H1') {
+      elemento.remove()
+    }
+  }
+  
+  if (gestor.clienteActual === null || gestor.comercialActual === null) {
+    return;
+  } 
+
+  const cliente = gestor.clientes[gestor.comercialActual][gestor.clienteActual];
+  const pedidosArray = gestor.pedidos[gestor.comercialActual][gestor.clienteActual];
+
+  const h2 = document.createElement('h2');
+  h2.textContent = `Cliente ${cliente.nombre}`; 
+  containerPedido.append(h2);
+
+  if (cliente.cuentaAbierta === false) {
+      return; 
+  }
+
+  let total = 0;
+  pedidosArray.forEach(linea => {
+    const producto = catalogo.productos.find(p => p.idProducto == linea.idProducto);
+    if (producto) {
+      total += linea.unidades * producto.precioUnidad;
+    }
+  });
+
+  const totalH2 = document.createElement('h2');
+  totalH2.textContent = `TOTAL: ${total.toFixed(2)}€`; 
+  containerPedido.append(totalH2);
+
+  const divEstado = document.createElement('div');
+  divEstado.classList.add('boton');
+
+  if (cliente.cuentaAbierta) {
+    divEstado.textContent = "PEDIDO ENVIADO Y COBRADO";
+
+
+    divEstado.onclick = () => {
+
+            let usuario = confirm('¿Estás seguro que quieres dar por finalizado este pedido?')
+            if(usuario) {
+              gestor.pedidos[gestor.comercialActual][gestor.clienteActual] = []; 
+              cliente.cuentaAbierta = false; 
+                for (const elemento of [...containerPedido.children]) {
+                  if(elemento.tagName != 'H1') {
+                    elemento.remove()
+                  }
+               }
+              cargarClientesDOM(); 
+              gestor.clienteActual = null; 
+            }
+        };
+  }
+
+  containerPedido.append(divEstado);
+
+  //CREACION DE TABLA DE PEDIDOS DEL CLIENTE
+  const tabla = document.createElement('table');
+  const thead = document.createElement('thead');
+  thead.innerHTML = `
+    <tr>
+      <th>Modificar</th>
+      <th>Uds.</th>
+      <th>Id.</th>
+      <th>Producto</th>
+      <th>Precio</th>
+    </tr>
+  `;
+  tabla.append(thead);
+
+  const tbody = document.createElement('tbody');
+
+  pedidosArray.forEach((linea, indexLinea) => {
+    const producto = catalogo.productos.find(p => p.idProducto == linea.idProducto);
+
+    if (!producto) {
+      return;
+    } 
+    
+    const tr = document.createElement('tr');
+
+    const tdModificar = document.createElement('td');
+    
+    const btnMas = document.createElement('input'); 
+    btnMas.type = "button";
+    btnMas.value = "+";
+    btnMas.className = "modificador"; 
+    btnMas.onclick = () => modificarLinea(indexLinea, 1); 
+
+    const btnMenos = document.createElement('input');
+    btnMenos.type = "button";
+    btnMenos.value = "-";
+    btnMenos.className = "modificador"; 
+    btnMenos.onclick = () => modificarLinea(indexLinea, -1); 
+
+    tdModificar.append(btnMas, btnMenos);
+
+    const tdUds = document.createElement('td');
+    tdUds.textContent = linea.unidades;
+
+    const tdId = document.createElement('td');
+    tdId.textContent = producto.idProducto;
+
+    const tdProducto = document.createElement('td');
+    tdProducto.textContent = `${producto.nombreProducto} (ud: ${producto.precioUnidad.toFixed(2)}€)`;
+
+    const tdPrecio = document.createElement('td');
+    const precioTotalLinea = linea.unidades * producto.precioUnidad;
+    tdPrecio.textContent = precioTotalLinea.toFixed(2); 
+
+    tr.append(tdModificar, tdUds, tdId, tdProducto, tdPrecio);
+    tbody.append(tr);
+  });
+
+  tabla.append(tbody);
+  containerPedido.append(tabla);
+}
+
+//Permite sumar y restar unidades en las diferentes lineas de pedidos
+function modificarLinea(indexLinea, cantidad) {
+  let misPedidos = gestor.pedidos[gestor.comercialActual][gestor.clienteActual];
+  const linea = misPedidos[indexLinea];
+  linea.unidades += cantidad;
+
+  if (linea.unidades <= 0) {
+    let usuario = confirm('¿Está seguro que quiere eliminar este producto del pedido?');
+
+    if (usuario) {
+          misPedidos = misPedidos.filter((linea, i) => i != indexLinea);
+          gestor.pedidos[gestor.comercialActual][gestor.clienteActual] = misPedidos;    
+    } 
+  }
+  actualizarPanelPedido();
+}
