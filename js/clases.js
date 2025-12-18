@@ -74,6 +74,11 @@ class LineaPedido{
     set unidades(value) {
         this._unidades = value;
     }
+
+    constructor(unidades, idProudcto) {
+        this.idProducto = idProudcto;
+        this.unidades = unidades;
+    }
 }
 
 class Cliente {
@@ -91,6 +96,11 @@ class Cliente {
     }
     set nombre(value) {
         this._nombre = value;
+    }
+
+    constructor(cuentaAbierta, nombre) {
+        this.cuentaAbierta = cuentaAbierta;
+        this.nombre = nombre
     }
 }
 
@@ -137,5 +147,14 @@ class Gestor {
     }
     set pedidos(value) {
         this._pedidos = value;
+    }
+
+    constructor() {
+        this.categorias = []
+        this.comerciales = []
+        this.clientes = []
+        this.comercialActual = null
+        this.clienteActual = null;
+        this.pedidos = []
     }
 }
