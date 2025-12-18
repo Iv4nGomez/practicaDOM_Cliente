@@ -53,13 +53,6 @@ const categorias = ["Aceite", "Encurtidos", "Salsas"];
 const catalogo = new Catalogo();
 const gestor = new Gestor();
 
-const formulario = document.getElementById('frmComercial');
-const padreFormulario = formulario.parentElement;
-
-const contenedor = document.createElement('div')
-contenedor.className = 'contenedorCliente';
-padreFormulario.append(contenedor)
-
 function cargaDatosIniciales() {
   catalogo.addProducto(1, "Aceite Oliva Virgen Extra 1l (Caja 20)", 178.15, 0);
   catalogo.addProducto(
@@ -99,247 +92,152 @@ function cargaDatosIniciales() {
   catalogo.addProducto(16, "Salsa Barbacoa 500gr (Caja de 30)", 67.5, 2);
 }
 
-//Elementos guardardas en constantes que se reutilizan en varias funciones
-const select = document.getElementsByName('comerciales')[0];
-const teclado =  document.getElementById('teclado');
+//CONSTANTES QUE NECESITO
+const selectComercial = document.getElementsByName('comerciales')[0];
+const containerDelegacion = document.createElement('div');
+containerDelegacion.classList = 'containerDelegacion';
+
 const containerPedido = document.getElementById('pedido');
-const selectProductos = document.getElementsByName('productos')[0];
+const tituloPedido = document.createElement('H1');
+tituloPedido.textContent = 'Pedido'
+containerPedido.append(tituloPedido)
+
+const h2 = document.createElement('H2');
 const selectCategoria = document.getElementsByName('categorias')[0];
-//Etructura de datos aux
+const selectProductos = document.getElementsByName('productos')[0];
 
-const pendientePago = [];
+const teclado = document.getElementById('teclado');
 
-//Invocación de funciones para el funcionamiento de la web
-cargaDatosIniciales();
-cargarComerciales();
-generarContenedorClientes();
-generarClientes();
-crearTituloPedido();
+
+
+
+
+//Ejecución de las funciones, para el flujo del programa
+cargaDatosIniciales()
+cargarClientes();
+estadoCliente()
+cargarClientesDOM();
 cargarCategorias();
 cargarProductos();
 
-//FUNCIONES
 
-function cargarComerciales() {
-  
-  for (let i = 0; i < comerciales.length; i++) {
-    
+function cargarClientes() {
+
+  //Añadir los comerciales al gestor
+  for (const comercial of comerciales) {
+    gestor.comerciales.push(comercial);
+  };
+  //Añadir comerciales al select de comercial
+  for (const comercial of gestor.comerciales) {
     const option = document.createElement('option');
-  
-    option.value = i;
-    option.textContent = comerciales[i];
-  
-    select.append(option);
+    option.value = comercial;
+    option.textContent = comercial;
+    selectComercial.append(option);
+  };
+}
+
+
+//Conseguir los clientes de cada comercial y añadirlos en DOM
+selectComercial.addEventListener('change', estadoCliente)
+
+function estadoCliente() {
+  //Conseguir el comercial actual
+  gestor.comercialActual = selectComercial.selectedIndex;
+  //Conseguir los clientes de ese comercial
+  for (const cliente of clientes[gestor.comercialActual]) {
+    gestor.clientes.push(new Cliente(false, cliente))
   }
-}
-
-function generarContenedorClientes() {
-  const contenedorClientes = document.createElement('div');
-  const form = select.parentElement;
-  form.parentElement.append(contenedorClientes);
-}
-
-select.addEventListener('change', generarClientes);
-
-function generarClientes() {
+  cargarClientesDOM();
   
-  const divClientes = [...document.querySelectorAll('.cliente')];
+};
+
+function cargarClientesDOM() {
   
-  divClientes.forEach((elementDiv) => {
-    elementDiv.remove();
-  })
-  const opcionSeleccionada = select.value;
-
-  for (let i = 0; i < clientes[opcionSeleccionada].length; i++) {
-    
-    const div = document.createElement('div');
-    div.classList.add('cliente')
-    div.innerHTML = clientes[opcionSeleccionada][i]
-    if (pendientePago.includes(clientes[opcionSeleccionada][i])) {
-      div.classList.add('pendiente')
-    }
-    else {
-      div.classList.add('pagado')
-
-    }
-    contenedor.append(div)
+  //Recorrer todo el contenedor borrando todos los hijos para actualizar
+  
+  for (const elemento of [...containerDelegacion.children]) {
+    elemento.remove();
   }
   
-}
-
-function crearTituloPedido() {
-  const titulo = document.createElement('h1');
-  titulo.textContent = 'Pedido'
-  containerPedido.append(titulo)
-}
-
-//Cambia el cliente seleccionado en el panel de pedido
-contenedor.addEventListener('click', (event) => {
+  const contenedorPanel = document.getElementById('clientes');
+  contenedorPanel.append(containerDelegacion);
   
-  [...containerPedido.children].forEach(element => {
-    
-    if (element.tagName != 'H1') {
-      element.remove()
+  //Crear los div donde van los clientes con sus estilos
+  for (const cliente of gestor.clientes) {
+    const divCliente = document.createElement('div');
+    if (cliente.cuentaAbierta == true) {
+      divCliente.classList.add('pendiente');
+    } else {
+      divCliente.classList.add('pagado');
     }
+      divCliente.classList.add('cliente');
+      divCliente.textContent = cliente.toString();
+    containerDelegacion.append(divCliente)
+  }
+  gestor.clientes = [];
+  
+  //Manejador de eventos anonimo para poder ver en que div se ha pulsado y ponerlo en el container de pedidos
+  containerDelegacion.addEventListener('click', (event) => {
+
+    
+    if(event.target.tagName == 'DIV') {
+      gestor.clienteActual = new Cliente(false, event.target.textContent)
+      h2.textContent = event.target.textContent;
+      containerPedido.append(h2);
+    };
   });
-  const cliente = document.createElement('H2');
-  const clienteSeleccionado = event.target;
-  cliente.textContent = event.target.textContent
 
-  if (cliente) {
-    containerPedido.append(cliente);
-  }
 
-  console.log(event.target.className);
-
-  if (event.target.className.includes('pendiente')) {
-    crearHeader()
-  }
-})
-
-teclado.addEventListener('click', pintarPendiente)
-
-//Si añade un producto a pedido pues se pone en rojo el div del cliente seleccionado
-function pintarPendiente(event) {
-  
-  
-  let clienteTexto = '';
-  [...containerPedido.children].forEach(elemento => {
-      if(elemento.tagName == 'H2') {
-        clienteTexto = elemento.textContent;
-      }
-    })
-
-    const contenedorCliente = document.getElementsByClassName('contenedorCliente')[0];
-
-    [...contenedorCliente.children].forEach(elemento => {
-
-      if(elemento.textContent == clienteTexto) {
-        if (!pendientePago.includes(elemento.textContent)) {
-          pendientePago.push(elemento.textContent);
-        }
-        elemento.classList.remove('pagado')
-        elemento.classList.add('pendiente')
-      }
-    })
-
-    let tablaEncontrada = false;
-    Array.from(containerPedido.children).forEach(elemento => {
-      if(elemento.tagName == 'TABLE') {
-        tablaEncontrada = true;
-      }
-    })
-
-    if (!tablaEncontrada) {
-
-      crearHeader()
-    }
-
-    const producto = selectProductos.value;
-
-    const numeroUnidades = event.target.value;
-
-    if (!event.target.value) {
-      return;
-    }
-
-    crearTabla(recuperarProducto(producto), numeroUnidades);
 }
 
 function cargarCategorias() {
+  //Tener en el getor las categorias
+  for (const categoria of categorias) {
+      gestor.categorias.push(categoria);
+  }
 
-categorias.forEach(element => {
-  const option = document.createElement('option');
-  option.value = element;
-  option.textContent = element;
-  selectCategoria.append(option); 
-});
-}
-
-function cargarProductos() {
-  
-  const valorCategoria = selectCategoria.selectedIndex;
-  for (const producto of catalogo.productos) {
-    if (producto.idCategoria == valorCategoria) {
-        const option = document.createElement('option');
-        option.value = producto.nombreProducto;
-        option.textContent = producto.nombreProducto;
-        selectProductos.append(option)
-    }
+  //Introducir visualmente en el DOM 
+  for (const categoria of gestor.categorias) {
+    const option = document.createElement('option');
+    option.value = categoria;
+    option.textContent = categoria;
+    
+    selectCategoria.append(option);
   }
 }
 
-//Si el usuario cambia de categoria hay que cargar los productos de nuevo
-selectCategoria.addEventListener('change', () => {
-
-[...selectProductos.children].forEach(element => {
-  element.remove()
-});
-cargarProductos();
-})
+selectCategoria.addEventListener('change', cargarProductos)
 
 
+function cargarProductos() {  
 
-function recuperarProducto(productoNombre) {
-  return catalogo.productos.find((producto) => productoNombre == producto.nombreProducto)
-}
+  for (const producto of [...selectProductos.children]) {
+      producto.remove()
+  }
 
-function crearTabla(producto, numeroUnidades) {
+  catalogo.productos.forEach(producto => {
+    if (selectCategoria.selectedIndex == producto.idCategoria) {
+      const option = document.createElement('option');
+      option.textContent = producto.nombreProducto;
+      option.value = producto.idProducto;
+      selectProductos.append(option);
 
-  const l1 = new LineaPedido();
-  
-l1._idProducto = producto.idProducto;
-l1.unidades = numeroUnidades;
-
-
-
-
-
-
-
-const table = document.querySelector('#pedido > table');
-
-const tbody = document.createElement('tbody');
-
-
-
-table.append(tbody)
-
-
-
-
-const cuerpoTabla = document.querySelector('#pedido > table tbody');
-const fila = cuerpoTabla.insertRow()
-
-const celdaModificadores = fila.insertCell()
-const celdaUnidades = fila.insertCell()
-const celdaIdProducto = fila.insertCell()
-const celdaNombreProducto = fila.insertCell()
-const celdaPrecioProducto = fila.insertCell()
-
-celdaModificadores.textContent = '';
-celdaUnidades.textContent = numeroUnidades;
-celdaIdProducto.textContent = producto.idProducto;
-celdaNombreProducto.textContent = producto.nombreProducto;
-celdaPrecioProducto.textContent = producto.precioUnidad;
-
-console.log(fila);
-
-}
-
-function crearHeader() {
-  
-  const table = document.createElement('table');
-  const columnas = ['Modificar', 'Uds.', 'Id.', 'Producto', 'Precio'];
-
-  const thead = table.createTHead()
-  const headerRow = thead.insertRow();
-
-  columnas.forEach(element => {
-    const th = document.createElement('th');
-    th.textContent = element;
-    headerRow.append(th)
+    }
   });
-
-  containerPedido.append(table)
 }
+
+teclado.addEventListener('click', cambiarEstadoCliente)
+
+function cambiarEstadoCliente(event) {
+  if(event.target.tagName == 'INPUT') {
+    for (const cliente of [...containerDelegacion.children]) {
+      if (cliente.textContent == gestor.clienteActual.nombre) {
+        cliente.classList.remove('pagado');
+        cliente.classList.add('pendiente');
+      }
+    }
+  }
+
+}
+
+

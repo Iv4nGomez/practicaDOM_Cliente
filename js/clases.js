@@ -102,6 +102,10 @@ class Cliente {
         this.cuentaAbierta = cuentaAbierta;
         this.nombre = nombre
     }
+
+    toString() {
+        return this.nombre;
+    }
 }
 
 class Gestor {
